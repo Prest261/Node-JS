@@ -1,81 +1,4 @@
-const fs = require('fs');
-const inquirer = require('inquirer');
-const axios = require('axios');
-const util = require('util');
-const htmlAsync = util.promisify(fs.writeFile);
-const colors = {
-	green: {
-		wrapperBackground: '#E6E1C3',
-		headerBackground: '#C1C72C',
-		headerColor: 'black',
-		photoBorderColor: '#black'
-	},
-	blue: {
-		wrapperBackground: '#5F64D3',
-		headerBackground: '#26175A',
-		headerColor: 'white',
-		photoBorderColor: '#73448C'
-	},
-	pink: {
-		wrapperBackground: '#879CDF',
-		headerBackground: '#FF8374',
-		headerColor: 'white',
-		photoBorderColor: '#FEE24C'
-	},
-	red: {
-		wrapperBackground: '#DE9967',
-		headerBackground: '#870603',
-		headerColor: 'white',
-		photoBorderColor: 'white'
-	}
-};
-
-inquirer
-	.prompt([
-		{
-			type: 'list',
-			message: 'What is your favorite color?',
-			choices: ['green', 'blue', 'pink', 'red'],
-			name: 'color'
-		},
-		{
-			type: 'input',
-			message: 'What is your GitHub repo name?',
-			name: 'repo'
-		}
-	])
-	.then((response) => {
-		//console.log('response ', response);
-		githubUN(response.repo);
-		writeToFile(response.color);
-
-		const userName = response.repo;
-		console.log(userName);
-
-		const color = colors[response.color];
-		var pdf = writeToFile(color, userName);
-		console.log(pdf);
-		htmlAsync('index.html', pdf).catch((e) => {
-			console.log('ERROR', e);
-		});
-	});
-
-function githubUN(userName) {
-	const queryUrl = `https://api.github.com/users/${userName}`;
-
-	axios
-		.get(queryUrl)
-		.then((response) => {
-			console.log('data: ', response.data);
-		})
-		.catch((error) => {
-			console.log(error);
-		});
-}
-
-function writeToFile(color, userName) {
-	console.log('color', color);
-	return `<!DOCTYPE html>
+<!DOCTYPE html>
       <html lang="en">
          <head>
             <meta charset="UTF-8" />
@@ -101,7 +24,7 @@ function writeToFile(color, userName) {
                height: 100%;
                }
                .wrapper {
-               background-color: ${color.wrapperBackground};
+               background-color: #879CDF;
                padding-top: 100px;
                }
                body {
@@ -143,8 +66,8 @@ function writeToFile(color, userName) {
                display: flex;
                justify-content: center;
                flex-wrap: wrap;
-               background-color: ${color.headerBackground};
-               color: ${color.headerColor};
+               background-color: #FF8374;
+               color: white;
                padding: 10px;
                width: 95%;
                border-radius: 6px;
@@ -155,7 +78,7 @@ function writeToFile(color, userName) {
                border-radius: 50%;
                object-fit: cover;
                margin-top: -75px;
-               border: 6px solid ${color.photoBorderColor};
+               border: 6px solid #FEE24C;
                box-shadow: rgba(0, 0, 0, 0.3) 4px 1px 20px 4px;
                }
                .photo-header h1, .photo-header h2 {
@@ -198,8 +121,8 @@ function writeToFile(color, userName) {
                .card {
                  padding: 20px;
                  border-radius: 6px;
-                 background-color: ${color.headerBackground};
-                 color: ${color.headerColor};
+                 background-color: #FF8374;
+                 color: white;
                  margin: 20px;
                }
                
@@ -219,5 +142,4 @@ function writeToFile(color, userName) {
                   zoom: .75; 
                 } 
                }
-            </style>`;
-}
+            </style>
