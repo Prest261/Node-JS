@@ -3,6 +3,8 @@ const inquirer = require('inquirer');
 const axios = require('axios');
 const util = require('util');
 const htmlAsync = util.promisify(fs.writeFile);
+var pdf = require('html-pdf');
+var options = { format: 'Letter' };
 const colors = {
 	green: {
 		wrapperBackground: '#E6E1C3',
@@ -46,34 +48,54 @@ inquirer
 	])
 	.then((response) => {
 		//console.log('response ', response);
-		githubUN(response.repo);
-		writeToFile(response.color);
-
-		const userName = response.repo;
-		console.log(userName);
-
 		const color = colors[response.color];
-		var pdf = writeToFile(color, userName);
-		console.log(pdf);
-		htmlAsync('index.html', pdf).catch((e) => {
-			console.log('ERROR', e);
-		});
+		githubUN(color, response.repo);
+
+		//writeToFile(response.color);
+
+		//const userName = response.repo;
+		//console.log(userName);
+
+		// htmlAsync('index.html', repoData).catch((e) => {
+		// 	console.log('ERROR', e);
+		// });
 	});
 
-function githubUN(userName) {
+function githubUN(color, userName) {
 	const queryUrl = `https://api.github.com/users/${userName}`;
 
 	axios
 		.get(queryUrl)
-		.then((response) => {
-			console.log('data: ', response.data);
+		.then((githubData) => {
+			console.log('data: ', githubData.data);
+
+			const queryUrlStars = `https://api.github.com/users/${userName}/repos`;
+			axios.get(queryUrlStars).then((githubStars) => {
+				let stars = 0;
+				for (let i = 0; i < githubStars.data.length; i++) {
+					stars = stars + githubStars.data[i].stargazers_count;
+				}
+
+				var html = writeToFile(stars, color, githubData.data);
+				console.log(html);
+				htmlAsync('index.html', html).catch((e) => {
+					console.log('ERROR', e);
+				});
+
+				pdf
+					.create(html, options)
+					.toFile('./developerProfile.pdf', function(err, res) {
+						if (err) return console.log(err);
+						console.log(res); // { filename: '/app/businesscard.pdf' }
+					});
+			});
 		})
 		.catch((error) => {
 			console.log(error);
 		});
 }
 
-function writeToFile(color, userName) {
+function writeToFile(stars, color, data) {
 	console.log('color', color);
 	return `<!DOCTYPE html>
       <html lang="en">
@@ -219,5 +241,58 @@ function writeToFile(color, userName) {
                   zoom: .75; 
                 } 
                }
-            </style>`;
+            </style>
+            <body>
+      <div class="wrapper">
+         <div class="photo-header">
+            <img src="${data.avatar_url}" alt="Photo of ${data.name}" />
+            <h1>Hi!</h1>
+            <h2>
+            My name is ${data.name}!</h1>
+            <h5>${data.name}</h5>
+            <nav class="links-nav">
+               <a class="nav-link" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps/place/${data.location}"><i class="fas fa-location-arrow"></i> ${data.location}</a>
+               <a class="nav-link" target="_blank" rel="noopener noreferrer" href="${data.html_url}"><i class="fab fa-github-alt"></i> GitHub</a>
+              <a class="nav-link" target="_blank" rel="noopener noreferrer" href="${data.blog}"><i class="fas fa-rss"></i> Blog</a>
+            </nav>
+         </div>
+         <main>
+            <div class="container">
+            <div class="row">
+               <div class="col">
+                  <h3>${data.bio}</h3>
+               </div>
+            </div>
+               <div class="row">
+                <div class="col">
+                    <div class="card">
+                      <h3>Public Repositories</h3>
+                      <h4>${data.public_repos}</h4>
+                    </div>
+                </div>
+                <div class="col">
+                  <div class="card">
+                    <h3>Followers</h3>
+                    <h4>${data.followers}</h4>
+                  </div>
+               </div>
+               </div>
+               <div class="row">
+               <div class="col">
+               <div class="card">
+                  <h3>GitHub Stars</h3>
+                  <h4>${stars}</h4>
+                  </div>
+               </div>
+                <div class="col">
+                <div class="card">
+                  <h3>Following</h3>
+                  <h4>${data.following}</h4>
+                  </div>
+               </div>
+               </div>
+            </div>
+         </main>
+      </div>
+   </body>`;
 }
